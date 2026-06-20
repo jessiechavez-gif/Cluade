@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sala de Mando · CIMA · v3</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Electrolize&family=Roboto:wght@300;400;500;700&family=Roboto+Mono:wght@400;500;700&display=swap');
+:root{
+  --void:#04032a; --panel:rgba(13,19,52,.58); --panel2:rgba(13,19,52,.82);
+  --line:rgba(120,140,205,.15); --line2:rgba(120,140,205,.26);
+  --ink:#eaf0ff; --muted:#94a0c8; --dim:#5d6692;
+  --blue:#2a9bef; --sky:#4aa5e5; --purple:#6439d0; --gold:#f0c75e;
+  --ok:#2ed47a; --warn:#f5b942; --bad:#f25b5b;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{background-color:#040329;color:var(--ink);font-family:'Roboto',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+.scaler{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);transform-origin:center center}
+.wall{width:1840px;height:1040px;padding:20px;position:relative;
+  background:linear-gradient(180deg,#070634,#040227);border:1px solid var(--line2);border-radius:18px;overflow:hidden;
+  box-shadow:0 40px 130px -30px rgba(0,0,0,.85),0 0 60px -20px rgba(60,90,220,.3)}
+#motes{position:absolute;inset:0;z-index:0}
+.vig{position:absolute;inset:0;z-index:1;pointer-events:none;border-radius:18px;
+  box-shadow:inset 0 0 180px 50px rgba(2,1,28,.6)}
+.gridbg{position:absolute;inset:0;z-index:1;pointer-events:none;opacity:.5;
+  background-image:linear-gradient(rgba(120,140,205,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(120,140,205,.045) 1px,transparent 1px);
+  background-size:40px 40px;-webkit-mask-image:radial-gradient(circle at 50% 38%,#000,transparent 82%)}
+.topbar{position:absolute;top:0;left:0;right:0;height:3px;z-index:3;
+  background:linear-gradient(90deg,transparent,var(--blue),var(--purple),var(--sky),transparent);opacity:.65}
+.beam{position:absolute;top:0;left:0;height:3px;width:260px;z-index:4;opacity:.95;
+  background:linear-gradient(90deg,transparent,#cfe6ff,#fff,#cfe6ff,transparent);animation:beam 5.5s linear infinite}
+@keyframes beam{from{transform:translateX(-260px)}to{transform:translateX(1860px)}}
+
+.content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;gap:13px}
+
+/* boot */
+.boot{position:absolute;inset:0;z-index:50;border-radius:18px;background:radial-gradient(700px 500px at 50% 45%,#0a0a3a,#040227);
+  display:flex;align-items:center;justify-content:center;transition:opacity .55s ease}
+.bootin{text-align:center}
+.bootlogo{font-family:'Electrolize';font-size:46px;letter-spacing:.4em;background:linear-gradient(92deg,#fff,var(--sky));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;animation:flick 1.1s ease}
+.boottxt{font-family:'Roboto Mono';font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin:14px 0 18px}
+.bootbar{width:300px;height:3px;background:rgba(120,140,205,.18);border-radius:3px;overflow:hidden;margin:0 auto}
+.bootfill{height:100%;width:0;background:linear-gradient(90deg,var(--blue),var(--sky));border-radius:3px;animation:fill 1s cubic-bezier(.5,.1,.3,1) forwards}
+@keyframes fill{to{width:100%}}
+@keyframes flick{0%{opacity:0}20%{opacity:1}28%{opacity:.4}36%{opacity:1}100%{opacity:1}}
+
+/* header */
+.whead{display:flex;align-items:center;gap:20px;padding-bottom:1px}
+.logo{display:flex;align-items:center;gap:12px}
+.logo .mark{width:38px;height:38px;border-radius:9px;background:conic-gradient(from 200deg,var(--purple),var(--blue),var(--sky),var(--purple));display:grid;place-items:center;font-family:'Electrolize';font-size:19px;color:#fff;box-shadow:0 0 24px -3px rgba(60,120,255,.8)}
+.logo .wm{font-family:'Electrolize';letter-spacing:.24em;font-size:24px}
+.htitle{font-family:'Electrolize';letter-spacing:.32em;font-size:15px;color:var(--muted);text-transform:uppercase;border-left:1px solid var(--line2);padding-left:20px}
+.htitle b{color:var(--ink)}
+.hspace{flex:1}
+.gstat{display:flex;align-items:center;gap:13px;padding:8px 16px;border-radius:12px;cursor:pointer;transition:transform .15s ease,border-color .2s ease}
+.gstat:hover{transform:translateY(-1px)}
+.gstat.amber{background:linear-gradient(100deg,rgba(245,185,66,.12),rgba(13,19,52,.5));border:1px solid rgba(245,185,66,.35)}
+.gstat.green{background:linear-gradient(100deg,rgba(46,212,122,.12),rgba(13,19,52,.5));border:1px solid rgba(46,212,122,.35)}
+.gstat.red{background:linear-gradient(100deg,rgba(242,91,91,.14),rgba(13,19,52,.5));border:1px solid rgba(242,91,91,.4)}
+.gstat .lt{width:14px;height:14px;border-radius:50%;position:relative;flex:none}
+.gstat.amber .lt{background:var(--warn);box-shadow:0 0 18px 4px rgba(245,185,66,.75)}
+.gstat.green .lt{background:var(--ok);box-shadow:0 0 18px 4px rgba(46,212,122,.7)}
+.gstat.red .lt{background:var(--bad);box-shadow:0 0 18px 4px rgba(242,91,91,.75)}
+.gstat .lt::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:2px solid currentColor;opacity:.4;animation:pr 2.4s infinite}
+.gstat.amber .lt::after{color:var(--warn)} .gstat.green .lt::after{color:var(--ok)} .gstat.red .lt::after{color:var(--bad)}
+@keyframes pr{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.7);opacity:0}}
+.gstat .gt{font-family:'Electrolize';letter-spacing:.14em;font-size:13px;text-transform:uppercase}
+.gstat.amber .gt{color:var(--warn)} .gstat.green .gt{color:var(--ok)} .gstat.red .gt{color:var(--bad)}
+.gstat .gd{font-size:12px;color:var(--muted);max-width:340px;line-height:1.3}
+.gstat .gd b{color:var(--ink)}
+.range{display:flex;gap:4px;background:rgba(13,19,52,.55);border:1px solid var(--line);border-radius:10px;padding:3px}
+.range button{font-family:'Roboto Mono';font-size:11px;letter-spacing:.06em;color:var(--muted);background:transparent;border:0;border-radius:7px;padding:6px 13px;cursor:pointer;text-transform:uppercase;transition:.15s}
+.range button:hover{color:var(--ink)}
+.range button.on{background:linear-gradient(100deg,rgba(42,155,239,.25),rgba(100,57,208,.22));color:var(--ink);box-shadow:0 0 14px -4px rgba(60,120,255,.7)}
+.clock{text-align:right;font-family:'Roboto Mono';line-height:1.2}
+.clock .t{font-size:25px;font-weight:500;letter-spacing:.04em}
+.clock .d{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em}
+.clock .u{font-size:10px;color:var(--ok);margin-top:3px;display:flex;align-items:center;justify-content:flex-end;gap:6px}
+.eq{display:inline-flex;gap:2px;align-items:flex-end;height:11px}
+.eq i{width:2.5px;height:3px;background:var(--ok);border-radius:1px;animation:eq 1s ease-in-out infinite}
+.eq i:nth-child(2){animation-delay:.12s} .eq i:nth-child(3){animation-delay:.24s} .eq i:nth-child(4){animation-delay:.36s} .eq i:nth-child(5){animation-delay:.48s}
+@keyframes eq{0%,100%{height:3px}50%{height:11px}}
+
+/* kpi strip */
+.kstrip{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+.ktile,.tile{opacity:0;animation:popIn .55s cubic-bezier(.2,.7,.2,1) both;animation-delay:var(--d,0s)}
+@keyframes popIn{from{opacity:0;transform:translateY(16px) scale(.965)}to{opacity:1;transform:none}}
+.ktile{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px 15px;backdrop-filter:blur(7px);position:relative;overflow:hidden;box-shadow:0 8px 30px -22px rgba(40,90,220,.5);cursor:pointer;transition:transform .15s ease,border-color .2s ease}
+.ktile:hover{transform:translateY(-2px);border-color:var(--line2)}
+.ktile::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(160,190,255,.25),transparent)}
+.ktile .kl{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--dim);display:flex;justify-content:space-between;align-items:center}
+.kv{font-family:'Roboto Mono';font-weight:500;font-size:26px;line-height:1;margin-top:8px}
+.kv .u{font-size:13px;color:var(--muted);margin-left:2px}
+.kd{font-size:11px;margin-top:7px;display:flex;align-items:center;gap:7px}
+.chip{font-family:'Roboto Mono';padding:2px 7px;border-radius:6px;font-size:10.5px}
+.chip.up{background:rgba(46,212,122,.14);color:var(--ok)} .chip.dn{background:rgba(242,91,91,.14);color:var(--bad)}
+.kd .vs{color:var(--dim)}
+.dot{width:8px;height:8px;border-radius:50%}
+.dot.ok{background:var(--ok);box-shadow:0 0 8px var(--ok)} .dot.a{background:var(--warn);box-shadow:0 0 8px var(--warn)} .dot.r{background:var(--bad);box-shadow:0 0 8px var(--bad)}
+
+/* mosaic */
+.mosaic{flex:1;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(6,1fr);gap:12px;min-height:0}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:13px;padding:12px 14px;backdrop-filter:blur(7px);display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative;box-shadow:0 10px 34px -24px rgba(40,90,220,.5);cursor:pointer;transition:transform .15s ease,border-color .2s ease}
+.tile:hover{transform:translateY(-2px);border-color:var(--line2)}
+.tile::before{content:"";position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(160,190,255,.22),transparent)}
+.th{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px;flex:none}
+.th .tt{font-family:'Electrolize';font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink)}
+.th .ts{font-size:10px;color:var(--dim)}
+.th .expand{font-family:'Roboto Mono';font-size:9px;color:var(--dim);opacity:0;transition:.2s;border:1px solid var(--line);border-radius:5px;padding:2px 6px}
+.tile:hover .expand{opacity:1}
+.tbody{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center}
+.A{grid-column:1/6;grid-row:1/3} .B{grid-column:6/10;grid-row:1/4} .C{grid-column:10/13;grid-row:1/4}
+.D{grid-column:1/4;grid-row:3/5} .E{grid-column:4/6;grid-row:3/5} .F{grid-column:1/4;grid-row:5/7}
+.G{grid-column:4/6;grid-row:5/7} .H{grid-column:6/10;grid-row:4/7} .I{grid-column:10/13;grid-row:4/6} .J{grid-column:10/13;grid-row:6/7}
+
+/* bars */
+.bar{display:flex;align-items:center;gap:9px;margin:6px 0;font-size:11.5px}
+.bar .bn{width:118px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar .btrack{flex:1;height:8px;background:rgba(120,140,205,.1);border-radius:5px;overflow:hidden}
+.bar .bf{height:100%;border-radius:5px;width:0;transition:width 1.1s cubic-bezier(.3,.8,.3,1);box-shadow:0 0 10px -1px currentColor}
+.bar .bvv{font-family:'Roboto Mono';font-size:11px;width:66px;text-align:right}
+
+/* heat table */
+.heat{width:100%;border-collapse:collapse;font-size:11.5px}
+.heat th{text-align:right;font-family:'Roboto Mono';font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);padding:5px 7px;border-bottom:1px solid var(--line)}
+.heat th:first-child{text-align:left}
+.heat td{padding:6.5px 7px;border-bottom:1px solid rgba(120,140,205,.08)}
+.heat td.n{font-family:'Roboto Mono';text-align:right}
+.heat tr:last-child td{border-bottom:none}
+.heat tbody tr{transition:background .15s}
+.heat tbody tr:hover{background:rgba(120,140,205,.06)}
+.unitn{display:flex;align-items:center;gap:8px;font-weight:500;font-size:12px}
+.pill{font-size:9.5px;padding:2px 8px;border-radius:999px;font-family:'Roboto Mono';display:inline-flex;align-items:center;gap:4px}
+.pill::before{content:"";width:5px;height:5px;border-radius:50%;background:currentColor}
+.pill.ok{background:rgba(46,212,122,.14);color:var(--ok)} .pill.a{background:rgba(245,185,66,.14);color:var(--warn)} .pill.r{background:rgba(242,91,91,.14);color:var(--bad)}
+
+/* risk rows */
+.rrow{display:flex;align-items:center;gap:11px;padding:7px 6px;border-radius:8px;border-bottom:1px solid rgba(120,140,205,.08)}
+.rrow:last-child{border:none}
+.rrow .rl{width:24px;height:24px;border-radius:7px;display:grid;place-items:center;flex:none;font-size:11px;font-weight:700}
+.rl.ok{background:rgba(46,212,122,.16);color:var(--ok)} .rl.a{background:rgba(245,185,66,.16);color:var(--warn)} .rl.r{background:rgba(242,91,91,.16);color:var(--bad)}
+.rrow .rt{font-size:12px;font-weight:500} .rrow .rd{font-size:10.5px;color:var(--muted)}
+.rrow .rs{margin-left:auto;font-family:'Roboto Mono';font-size:9.5px;letter-spacing:.08em;text-transform:uppercase}
+.rs.ok{color:var(--ok)} .rs.a{color:var(--warn)} .rs.r{color:var(--bad)}
+.critpulse{animation:critp 2.4s ease-in-out infinite}
+@keyframes critp{0%,100%{box-shadow:0 0 0 0 rgba(242,91,91,0);background:transparent}50%{box-shadow:0 0 16px -3px rgba(242,91,91,.35);background:rgba(242,91,91,.05)}}
+
+/* items */
+.it{display:flex;gap:9px;padding:7px 0;border-bottom:1px solid rgba(120,140,205,.08);font-size:11.5px}
+.it:last-child{border:none}
+.it .mk{width:5px;border-radius:3px;flex:none}
+.mk.r{background:var(--bad)} .mk.a{background:var(--warn)} .mk.b{background:var(--blue)}
+.it .itt{line-height:1.3} .it .itm{font-size:10px;color:var(--dim);margin-top:1px}
+
+.bigv{font-family:'Roboto Mono';font-weight:500;font-size:24px}
+.minirow{display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(120,140,205,.08);font-size:11.5px}
+.minirow:last-child{border:none}
+.minirow .ml{color:var(--muted)} .minirow .mv{font-family:'Roboto Mono';font-size:14px}
+.gaugewrap{display:flex;flex-direction:column;align-items:center;gap:4px}
+.gnum{font-family:'Roboto Mono';font-size:30px;font-weight:500;color:var(--ok);margin-top:-6px}
+.gsub{font-size:10.5px;color:var(--dim)}
+
+svg .draw{stroke-dashoffset:1;transition:stroke-dashoffset 1.4s ease}
+svg .draw.go{stroke-dashoffset:0}
+.af{opacity:0;transition:opacity 1s ease .25s} .af.go{opacity:1}
+.legend{display:flex;gap:12px;font-size:10px;color:var(--muted);margin-top:8px;flex:none}
+.legend span{display:flex;align-items:center;gap:5px} .legend i{width:8px;height:8px;border-radius:2px}
+
+/* tooltip */
+#tip{position:fixed;z-index:80;pointer-events:none;opacity:0;transform:translate(-50%,-120%);transition:opacity .12s ease;
+  background:var(--panel2);border:1px solid var(--line2);border-radius:9px;padding:8px 11px;backdrop-filter:blur(10px);
+  box-shadow:0 14px 40px -12px rgba(0,0,0,.7);font-size:11px;white-space:nowrap}
+#tip .tl{font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+#tip .tv{font-family:'Roboto Mono';font-size:15px;font-weight:500;margin-top:2px}
+#tip .tx{font-size:10px;color:var(--muted);margin-top:1px}
+
+/* drawer */
+.scrim{position:absolute;inset:0;z-index:60;background:rgba(2,1,20,.55);backdrop-filter:blur(2px);opacity:0;pointer-events:none;transition:opacity .3s ease;border-radius:18px}
+.scrim.on{opacity:1;pointer-events:auto}
+.drawer{position:absolute;top:14px;right:14px;bottom:14px;width:560px;z-index:61;
+  background:linear-gradient(180deg,rgba(11,16,46,.97),rgba(7,9,33,.98));border:1px solid var(--line2);border-radius:15px;
+  box-shadow:-30px 0 90px -20px rgba(0,0,0,.7);transform:translateX(calc(100% + 30px));transition:transform .42s cubic-bezier(.4,.05,.2,1);
+  display:flex;flex-direction:column;overflow:hidden}
+.drawer.on{transform:none}
+.dh{display:flex;align-items:flex-start;gap:14px;padding:22px 24px 18px;border-bottom:1px solid var(--line)}
+.dh .dk{font-family:'Roboto Mono';font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--blue)}
+.dh .dt{font-family:'Electrolize';font-size:22px;letter-spacing:.04em;margin-top:5px}
+.dh .dsub{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.4}
+.dh .dx{margin-left:auto;width:34px;height:34px;border-radius:9px;border:1px solid var(--line2);background:transparent;color:var(--muted);font-size:18px;cursor:pointer;flex:none;transition:.15s}
+.dh .dx:hover{background:rgba(242,91,91,.12);color:var(--bad);border-color:rgba(242,91,91,.4)}
+.db{padding:20px 24px;overflow:auto;flex:1}
+.db::-webkit-scrollbar{width:8px}.db::-webkit-scrollbar-thumb{background:var(--line2);border-radius:4px}
+.dsec{font-family:'Roboto Mono';font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:18px 0 10px}
+.dsec:first-child{margin-top:0}
+.dstat{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.dcard{background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:13px 15px}
+.dcard .dcl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+.dcard .dcv{font-family:'Roboto Mono';font-size:22px;font-weight:500;margin-top:6px}
+.dcard .dcd{font-size:11px;margin-top:5px}
+.dnar{font-size:13px;line-height:1.6;color:var(--ink)}
+.dnar b{color:var(--gold)}
+.daction{display:flex;align-items:center;gap:11px;padding:11px 13px;border-radius:10px;background:var(--panel);border:1px solid var(--line);margin-bottom:9px}
+.daction .di{width:8px;height:8px;border-radius:50%;flex:none}
+.daction .dat{font-size:12.5px;font-weight:500}.daction .dam{font-size:10.5px;color:var(--muted);margin-top:2px}
+.daction .dab{margin-left:auto;font-family:'Roboto Mono';font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:5px 11px;border-radius:7px;border:1px solid var(--line2);color:var(--sky);cursor:pointer;transition:.15s}
+.daction .dab:hover{background:rgba(74,165,229,.14)}
+.demo{font-family:'Roboto Mono';font-size:9px;letter-spacing:.12em;color:var(--dim);border:1px solid var(--line);border-radius:5px;padding:3px 7px;text-transform:uppercase}
+kbd{font-family:'Roboto Mono';font-size:10px;background:rgba(120,140,205,.12);border:1px solid var(--line2);border-radius:4px;padding:1px 5px;color:var(--muted)}
+
+/* gobierno del dato */
+.gdot{width:7px;height:7px;border-radius:50%;display:inline-block;vertical-align:middle;box-shadow:0 0 6px currentColor}
+.th .gdot{margin-left:7px}
+.kl .gdot{margin-left:6px}
+.dhealth{display:flex;align-items:center;gap:9px;padding:6px 13px;border-radius:11px;background:rgba(13,19,52,.55);border:1px solid var(--line);cursor:pointer;transition:.15s}
+.dhealth:hover{border-color:var(--line2);transform:translateY(-1px)}
+.dhealth .dhn{font-family:'Roboto Mono';font-size:16px;font-weight:500;line-height:1}
+.dhealth .dhl{font-size:9px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim);line-height:1.25}
+.btnghost{display:flex;align-items:center;gap:7px;padding:8px 14px;border-radius:11px;background:linear-gradient(100deg,rgba(42,155,239,.16),rgba(100,57,208,.14));border:1px solid var(--line2);color:var(--ink);font-family:'Electrolize';letter-spacing:.1em;font-size:11px;text-transform:uppercase;cursor:pointer;transition:.15s;white-space:nowrap}
+.btnghost:hover{box-shadow:0 0 16px -4px rgba(60,120,255,.7);transform:translateY(-1px)}
+/* lente director */
+.lensbar{display:flex;align-items:center;gap:13px;flex:none}
+.lens{display:flex;align-items:center;gap:8px}
+.lens .ll,.lensbar .ll{font-family:'Roboto Mono';font-size:9px;letter-spacing:.13em;text-transform:uppercase;color:var(--dim)}
+.lens button{font-family:'Roboto';font-size:12px;color:var(--muted);background:rgba(13,19,52,.5);border:1px solid var(--line);border-radius:9px;padding:6px 14px;cursor:pointer;transition:.15s}
+.lens button:hover{color:var(--ink);border-color:var(--line2)}
+.lens button.on{color:var(--ink);border-color:var(--blue);background:linear-gradient(100deg,rgba(42,155,239,.2),rgba(100,57,208,.16));box-shadow:0 0 14px -5px rgba(60,120,255,.7)}
+.mosaic.focus .tile{opacity:.2;filter:saturate(.45)}
+.mosaic.focus .tile.lit{opacity:1;filter:none;border-color:var(--line2)}
+.mosaic.focus .tile.lit::after{content:"";position:absolute;inset:0;border-radius:13px;box-shadow:0 0 0 1px rgba(74,165,229,.4),0 0 28px -6px rgba(60,120,255,.55);pointer-events:none}
+/* IA */
+.airow{display:flex;gap:11px;padding:11px 0;border-bottom:1px solid rgba(120,140,205,.1)}
+.airow:last-child{border:none}
+.airow .aic{width:27px;height:27px;border-radius:8px;display:grid;place-items:center;font-size:13px;flex:none}
+.airow .ait{font-size:12.5px;line-height:1.45}
+.airow .air{font-size:11px;color:var(--gold);margin-top:3px}
+.gtbl{width:100%;border-collapse:collapse;font-size:11.5px}
+.gtbl td{padding:7px 6px;border-bottom:1px solid rgba(120,140,205,.08)}
+.gtbl tr:last-child td{border-bottom:none}
+.gtbl td.s{color:var(--muted);font-size:10.5px}
+.gtbl td.t{text-align:right;font-family:'Roboto Mono';font-size:10px}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none!important}
+  .ktile,.tile{opacity:1} svg .draw{stroke-dashoffset:0} .af{opacity:1} .boot{display:none}
+}
+</style>
+</head>
+<body>
+<div class="scaler" id="scaler">
+  <div class="wall" id="wall">
+    <canvas id="motes"></canvas>
+    <div class="gridbg"></div>
+    <div class="vig"></div>
+    <div class="topbar"></div>
+    <div class="beam"></div>
+    <div class="content" id="content"></div>
+    <div class="scrim" id="scrim"></div>
+    <aside class="drawer" id="drawer" aria-hidden="true"></aside>
+    <div class="boot" id="boot"><div class="bootin"><div class="bootlogo">CIMA</div><div class="boottxt">Sistema de Dirección · inicializando</div><div class="bootbar"><div class="bootfill"></div></div></div></div>
+  </div>
+</div>
+<div id="tip"></div>
+<script>
+(function(){
+const $=(s,r=document)=>r.querySelector(s);
+const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const fmt=n=>Math.round(n).toLocaleString('en-US');
+let gid=0;
+
+/* ============================================================
+   CAPA DE DATOS  ·  todo lo editable vive aquí
+   ============================================================ */
+const DATA={
+  group:{
+    status:'amber',
+    label:'Grupo en ámbar',
+    summary:'EBITDA <b>0.6 pts bajo plan</b> · 2 unidades consumen caja · <b>1 riesgo legal crítico</b>. Ventas y NPS sobre plan.'
+  },
+  // deltas por rango de tiempo
+  kpis:[
+    {id:'ventas',l:'Ventas YTD',pre:'$',n:8240,suf:' M',s:'ok',sc:'blue',sp:[7100,7400,7610,7820,8010,8240],
+      r:{mes:{d:'2.4%',dir:'up',vs:'vs plan'},trim:{d:'6.1%',dir:'up',vs:'vs trim ant.'},ytd:{d:'14.8%',dir:'up',vs:'vs 2025'}}},
+    {id:'ebitda',l:'EBITDA',n:17.8,suf:'%',dec:1,s:'a',sc:'gold',sp:[18.6,18.3,18.1,17.9,17.8,17.8],
+      r:{mes:{d:'0.6 pts',dir:'dn',vs:'vs plan'},trim:{d:'0.8 pts',dir:'dn',vs:'vs trim ant.'},ytd:{d:'0.3 pts',dir:'dn',vs:'vs 2025'}}},
+    {id:'flujo',l:'Flujo (caja)',pre:'+$',n:612,suf:' M',s:'ok',sc:'ok',sp:[420,490,540,570,595,612],
+      r:{mes:{d:'9.0%',dir:'up',vs:'vs plan'},trim:{d:'21%',dir:'up',vs:'vs trim ant.'},ytd:{d:'31%',dir:'up',vs:'vs 2025'}}},
+    {id:'cartera',l:'Cartera',pre:'$',n:1180,suf:' M',s:'a',sc:'purple',sp:[1080,1110,1135,1155,1170,1180],
+      r:{mes:{d:'4.0%',dir:'dn',vs:'vs mes ant.'},trim:{d:'7.2%',dir:'dn',vs:'vs trim ant.'},ytd:{d:'9.3%',dir:'dn',vs:'vs 2025'}}},
+    {id:'capital',l:'Capital trabajo',pre:'$',n:1940,suf:' M',s:'ok',sc:'sky',sp:[1880,1900,1915,1925,1933,1940],
+      r:{mes:{d:'1.2%',dir:'up',vs:'vs plan'},trim:{d:'3.1%',dir:'up',vs:'vs trim ant.'},ytd:{d:'3.2%',dir:'up',vs:'vs 2025'}}},
+    {id:'nps',l:'NPS corporativo',n:61,s:'ok',sc:'ok',sp:[54,56,57,59,60,61],
+      r:{mes:{d:'1 pt',dir:'up',vs:'vs mes ant.'},trim:{d:'3 pts',dir:'up',vs:'vs trim ant.'},ytd:{d:'7 pts',dir:'up',vs:'vs 2025'}}}
+  ],
+  forecast:{vals:[720,760,790,810,840,860,880,905,930,960,985,1010],split:7,
+    labels:['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic']},
+  units:[
+    ['Alimentos',2980,19.2,240,'ok'],['Salud',2140,16.1,120,'a'],['Cimarrón',1520,21.4,180,'ok'],
+    ['Marketing & E-com',980,12.8,-40,'a'],['Diamcers',420,14.5,30,'ok'],['El Jarro',200,9.2,-60,'r']
+  ],
+  risks:[
+    ['r','Legales','Litigio relevante en curso','Crítico',true,'Demanda mercantil de proveedor por $85 M. Audiencia clave en 12 días. Provisión contable pendiente de validar con Legal y Finanzas.'],
+    ['a','Financieros','Flujo negativo en 2 unidades','Atención',false,'El Jarro (−$60 M) y Marketing & E-com (−$40 M) consumen caja. Plan de corrección requerido este trimestre.'],
+    ['a','Talento','Rotación elevada en Salud','Atención',false,'Rotación 28% anualizada en operación Salud, sobre el 15% objetivo. Impacta NPS y costos de reclutamiento.'],
+    ['ok','Operativos','Sin incidencias','Estable',false,'Cadena de suministro y producción dentro de parámetros. Sin paros ni roturas de inventario relevantes.'],
+    ['ok','Comerciales','Pipeline sano','Estable',false,'Pipeline ponderado $2,360 M, cobertura 1.4x sobre meta del trimestre.'],
+    ['ok','Reputacionales','Sin alertas en medios','Estable',false,'Monitoreo de medios y redes sin menciones negativas relevantes en el periodo.']
+  ],
+  pipeline:[{n:'Propuesta',v:760,c:'var(--blue)'},{n:'Prospección',v:640,c:'var(--dim)'},{n:'Calificación',v:520,c:'var(--sky)'},{n:'Negociación',v:440,c:'var(--purple)'}],
+  cash:[['Alimentos',240,'ok'],['Cimarrón',180,'ok'],['Salud',120,'sky'],['Marketing',-40,'warn'],['El Jarro',-60,'bad']],
+  horizon:[['Forecast 30d','$915 M'],['Forecast 90d','$2,790 M'],['Licitaciones ganadas','9 / 24'],['Tasa de éxito','37%']],
+  clients:[
+    ['Grupo Comercial Norte',680,72,'ok'],['Cadena Bienestar',540,64,'ok'],['Distribuidora del Bajío',410,58,'a'],
+    ['Corporativo Peña',320,44,'r'],['Mayoreo Sigma',280,61,'ok']
+  ],
+  decisions:[
+    ['r','Aprobar plan de caja de El Jarro','Vence en 3 días'],
+    ['a','Renovación contrato Mayoreo Sigma','$180 M anuales'],
+    ['b','Validar forecast Q3 consolidado','Pendiente Finanzas'],
+    ['a','Visita a Corporativo Peña','NPS 44 · en riesgo']
+  ],
+  acquisitions:[['r','El Jarro','45% int.','bad'],['ok','Diamcers','82% int.','ok']],
+  // FASE 1 · Gobierno: [fuente oficial, dueño, confiabilidad(ok/val/no), última actualización]
+  gov:{
+    ventas:['SAP','Finanzas · E. Mata','ok','hoy 06:40'],
+    ebitda:['SAP','Finanzas · E. Mata','val','hoy 06:40'],
+    flujo:['SAP','Tesorería · Claudia','ok','hoy 06:40'],
+    cartera:['SAP','Crédito y Cobranza','ok','hoy 06:40'],
+    capital:['SAP','Finanzas · E. Mata','val','hoy 06:40'],
+    nps:['Salesforce','Experiencia al Cliente','ok','ayer 18:00'],
+    forecast:['SAP + Odoo','BI · A. Aristi','val','hoy 06:40'],
+    units:['SAP','Finanzas · E. Mata','ok','hoy 06:40'],
+    risks:['Manual','Dirección · J. Joe','val','lun 07:00'],
+    pipeline:['Salesforce','Comercial · J.L. Zertuche','ok','hoy 06:15'],
+    cash:['SAP','Tesorería · Claudia','ok','hoy 06:40'],
+    horizon:['Salesforce + Gobierno','Comercial','val','hoy 06:15'],
+    clients:['Salesforce','Comercial · J.L. Zertuche','ok','hoy 06:15'],
+    decisions:['Manual','Dirección General','ok','hoy 07:30'],
+    acq:['Excel + SAP','M&A · A. Aristi','no','vie 17:00'],
+    group:['Consolidado','Dirección General','val','hoy 06:45']
+  },
+  // IA · [tipo, hallazgo, recomendación]
+  ai:[
+    ['risk','El Jarro acumula 3 meses de flujo negativo (−$60 M) e integración 45% vs 70% del plan. Riesgo de caja en 30 días.','Aprobar el plan de caja: vence en 3 días.'],
+    ['trend','Alimentos sostiene EBITDA 19.2% y aporta ~38% de la caja del grupo; tendencia estable 6 periodos.','Proteger suministro y capacidad de Alimentos.'],
+    ['cust','Corporativo Peña: NPS 44 y $320 M en riesgo, sin visita registrada en 60+ días.','Agendar visita de Dirección esta semana.'],
+    ['data','3 indicadores requieren validación y 1 no es confiable (Adquisiciones, fuente Excel).','Cerrar fuente oficial de M&A antes del V1 (1-sep).']
+  ]
+};
+let RANGE='mes';
+
+/* ============================================================
+   helpers de render
+   ============================================================ */
+function spark(vals,color,w=130,h=30){
+  const mn=Math.min(...vals),mx=Math.max(...vals),rng=(mx-mn)||1,p=2;
+  const pts=vals.map((v,i)=>[p+i/(vals.length-1)*(w-2*p),h-p-((v-mn)/rng)*(h-2*p)]);
+  const id='s'+(gid++),line=pts.map(q=>q[0].toFixed(1)+','+q[1].toFixed(1)).join(' ');
+  return '<svg class="lspark" data-color="'+color+'" data-w="'+w+'" data-h="'+h+'" data-vals="'+vals.join(',')+'" width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="margin-top:9px">'
+   +'<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+color+'" stop-opacity=".34"/><stop offset="1" stop-color="'+color+'" stop-opacity="0"/></linearGradient></defs>'
+   +'<polygon class="lfill af" points="0,'+h+' '+line+' '+w+','+h+'" fill="url(#'+id+')"/>'
+   +'<polyline class="lline draw" points="'+line+'" fill="none" stroke="'+color+'" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+function area(vals,split,color,labels,w=520,h=120){
+  const mn=Math.min(...vals)*0.95,mx=Math.max(...vals)*1.05,rng=(mx-mn)||1,pl=6;
+  const X=i=>pl+i/(vals.length-1)*(w-2*pl),Y=v=>h-16-((v-mn)/rng)*(h-32);
+  const id='a'+(gid++);
+  const solid=vals.slice(0,split+1).map((v,i)=>X(i).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+  const dash=vals.slice(split).map((v,i)=>X(i+split).toFixed(1)+','+Y(v).toFixed(1)).join(' ');
+  const af=X(0).toFixed(1)+','+(h-16)+' '+solid+' '+X(split).toFixed(1)+','+(h-16);
+  let g=''; for(let k=0;k<=3;k++){const yy=16+k*((h-32)/3);g+='<line x1="'+pl+'" y1="'+yy+'" x2="'+(w-pl)+'" y2="'+yy+'" stroke="rgba(120,140,205,.08)"/>';}
+  // puntos para tooltip interactivo
+  const dpts=vals.map((v,i)=>X(i).toFixed(1)+':'+Y(v).toFixed(1)+':'+v+':'+(labels?labels[i]:i)+':'+(i>split?1:0)).join(';');
+  return '<svg class="iarea" data-pts="'+dpts+'" data-split="'+split+'" data-color="'+color+'" width="100%" height="'+h+'" viewBox="0 0 '+w+' '+h+'" preserveAspectRatio="none" style="overflow:visible">'
+   +'<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+color+'" stop-opacity=".3"/><stop offset="1" stop-color="'+color+'" stop-opacity="0"/></linearGradient></defs>'
+   +g+'<polygon class="af" points="'+af+'" fill="url(#'+id+')"/>'
+   +'<polyline class="draw" points="'+solid+'" fill="none" stroke="'+color+'" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>'
+   +'<polyline class="draw" points="'+dash+'" fill="none" stroke="'+color+'" stroke-width="2" stroke-dasharray="5 4" opacity=".55"/>'
+   +'<line class="acursor" x1="0" y1="16" x2="0" y2="'+(h-16)+'" stroke="'+color+'" stroke-width="1" opacity="0"/>'
+   +'<circle class="adot" r="4" fill="'+color+'" stroke="#04032a" stroke-width="2" opacity="0"/></svg>';
+}
+function gauge(val){
+  const w=150,h=78,r=60,cx=w/2,cy=72,a=Math.PI*(1-val/100);
+  const ex=cx+r*Math.cos(a),ey=cy-r*Math.sin(a),col=val>=60?'var(--ok)':val>=40?'var(--warn)':'var(--bad)';
+  return '<svg width="'+w+'" height="'+h+'" viewBox="0 0 '+w+' '+h+'">'
+   +'<path d="M '+(cx-r)+' '+cy+' A '+r+' '+r+' 0 0 1 '+(cx+r)+' '+cy+'" fill="none" stroke="rgba(120,140,205,.14)" stroke-width="9" stroke-linecap="round"/>'
+   +'<path class="draw" d="M '+(cx-r)+' '+cy+' A '+r+' '+r+' 0 0 1 '+ex.toFixed(1)+' '+ey.toFixed(1)+'" fill="none" stroke="'+col+'" stroke-width="9" stroke-linecap="round"/></svg>';
+}
+const bars=rows=>rows.map(r=>'<div class="bar"><div class="bn">'+r.n+'</div><div class="btrack"><div class="bf" data-w="'+(r.v/r.max*100)+'" style="background:'+r.c+';color:'+r.c+'"></div></div><div class="bvv">'+r.t+'</div></div>').join('');
+const cnt=(n,pre,suf,dec)=>'<span data-count="'+n+'" data-pre="'+(pre||'')+'" data-suf="'+(suf||'')+'" data-dec="'+(dec||0)+'">'+(pre||'')+'0'+(suf||'')+'</span>';
+const C={blue:'var(--blue)',sky:'var(--sky)',gold:'var(--gold)',purple:'var(--purple)',ok:'var(--ok)'};
+
+/* gobierno del dato */
+const TRUST={ok:['Confiable','var(--ok)'],val:['Requiere validación','var(--warn)'],no:['No confiable','var(--bad)']};
+const govDot=id=>{const g=DATA.gov[id];if(!g)return '';const t=TRUST[g[2]];return '<span class="gdot" title="Fuente: '+g[0]+' · '+t[0]+' · act. '+g[3]+'" style="background:'+t[1]+';color:'+t[1]+'"></span>';};
+function govSection(id){const g=DATA.gov[id];if(!g)return '';const t=TRUST[g[2]];
+  return '<div class="dsec">Gobierno del dato · fuente única</div><div class="dstat">'
+   +card('Fuente oficial',g[0],'única versión de la verdad')
+   +card('Dueño del dato',g[1],'garantiza confiabilidad')
+   +card('Confiabilidad',t[0],'',t[1])
+   +card('Última actualización',g[3],'sincronización automática')+'</div>';}
+function trustCounts(){let ok=0,val=0,no=0;Object.values(DATA.gov).forEach(g=>{if(g[2]==='ok')ok++;else if(g[2]==='val')val++;else no++;});
+  const total=ok+val+no;return{ok,val,no,total,pct:Math.round(ok/total*100)};}
+/* IA */
+const AICON={risk:['⚠','rgba(242,91,91,.16)'],trend:['↗','rgba(46,212,122,.16)'],cust:['◎','rgba(74,165,229,.16)'],data:['⛁','rgba(245,185,66,.16)']};
+const aiRows=()=>DATA.ai.map(a=>{const ic=AICON[a[0]];return '<div class="airow"><div class="aic" style="background:'+ic[1]+'">'+ic[0]+'</div><div><div class="ait">'+a[1]+'</div><div class="air">↳ '+a[2]+'</div></div></div>';}).join('');
+/* lente director: tile → pregunta */
+const LENS={A:'sell',B:'now',C:'risk',D:'sell',E:'now',F:'now',G:'sell',H:'sell',I:'risk',J:'now'};
+
+function ktileHTML(o){const rr=o.r[RANGE],c=rr.dir==='dn'?'dn':'up',a=rr.dir==='dn'?'▼':'▲';
+  return '<div class="ktile" data-drawer="kpi:'+o.id+'"><div class="kl"><span>'+o.l+govDot(o.id)+'</span><span class="dot '+o.s+'"></span></div>'
+   +'<div class="kv">'+cnt(o.n,o.pre,o.suf,o.dec)+(o.u?'<span class="u">'+o.u+'</span>':'')+'</div>'
+   +'<div class="kd"><span class="chip '+c+'">'+a+' '+rr.d+'</span><span class="vs">'+rr.vs+'</span></div>'
+   +spark(o.sp,C[o.sc])+'</div>';}
+const rrow=r=>'<div class="rrow'+(r[4]?' critpulse':'')+'"><div class="rl '+r[0]+'">'+(r[0]==='r'?'!':r[0]==='a'?'△':'✓')+'</div><div><div class="rt">'+r[1]+'</div><div class="rd">'+r[2]+'</div></div><div class="rs '+r[0]+'">'+r[3]+'</div></div>';
+const item=d=>'<div class="it"><div class="mk '+d[0]+'"></div><div><div class="itt">'+d[1]+'</div><div class="itm">'+d[2]+'</div></div></div>';
+const tile=(cls,id,title,sub,body)=>'<div class="tile '+cls+'" data-drawer="'+id+'" data-lens="'+(LENS[cls]||'')+'"><div class="th"><span class="tt">'+title+govDot(id)+'</span><span class="ts">'+sub+'</span><span class="expand">expandir ↗</span></div><div class="tbody">'+body+'</div></div>';
+
+function heat(){
+  let r=DATA.units.map(u=>'<tr><td><div class="unitn"><span class="dot '+u[4]+'"></span>'+u[0]+'</div></td><td class="n">$'+fmt(u[1])+'</td><td class="n">'+u[2].toFixed(1)+'%</td><td class="n" style="color:'+(u[3]<0?'var(--bad)':'var(--ok)')+'">'+(u[3]<0?'−$'+fmt(-u[3]):'+$'+fmt(u[3]))+'</td><td class="n"><span class="pill '+u[4]+'">'+(u[4]==='ok'?'Plan':u[4]==='a'?'Atención':'Crítico')+'</span></td></tr>').join('');
+  return '<table class="heat"><thead><tr><th>Unidad</th><th>Ventas M</th><th>EBITDA</th><th>Flujo M</th><th>Estatus</th></tr></thead><tbody>'+r+'</tbody></table>';
+}
+function clientes(){
+  let r=DATA.clients.map(x=>'<tr><td><div class="unitn"><span class="dot '+x[3]+'"></span>'+x[0]+'</div></td><td class="n">$'+x[1]+' M</td><td class="n">'+x[2]+'</td><td class="n"><span class="pill '+x[3]+'">'+(x[3]==='ok'?'Bajo':x[3]==='a'?'Medio':'Alto')+'</span></td></tr>').join('');
+  return '<table class="heat"><thead><tr><th>Cliente estratégico</th><th>Venta</th><th>NPS</th><th>Riesgo</th></tr></thead><tbody>'+r+'</tbody></table>';
+}
+
+/* ============================================================
+   header
+   ============================================================ */
+function headerHTML(){const g=DATA.group;
+ return '<div class="whead"><div class="logo"><div class="mark">C</div><div class="wm">CIMA</div></div>'
+ +'<div class="htitle"><b>Sala de Mando</b> · Dirección General</div><div class="hspace"></div>'
+ +'<div class="gstat '+g.status+'" data-drawer="group"><div class="lt"></div><div><div class="gt">● '+g.label+'</div>'
+ +'<div class="gd">'+g.summary+'</div></div></div>'
+ +(function(){const c=trustCounts();return '<div class="dhealth" data-drawer="datahealth" title="Confiabilidad de la información"><div class="gdot" style="background:var(--ok);color:var(--ok)"></div><div><div class="dhn">'+c.pct+'%</div><div class="dhl">datos confiables · '+c.val+' x validar</div></div></div>';})()
+ +'<button class="btnghost" data-drawer="briefing">▦ Briefing lun</button>'
+ +'<div class="range" id="range">'
+ +'<button data-r="mes" class="'+(RANGE==='mes'?'on':'')+'">Mes</button>'
+ +'<button data-r="trim" class="'+(RANGE==='trim'?'on':'')+'">Trim</button>'
+ +'<button data-r="ytd" class="'+(RANGE==='ytd'?'on':'')+'">YTD</button></div>'
+ +'<div class="clock"><div class="t" id="clk">--:--:--</div><div class="d">vie 20 jun 2026</div>'
+ +'<div class="u">● en vivo<span class="eq"><i></i><i></i><i></i><i></i><i></i></span></div></div>'
+ +'<span class="demo">Datos ilustrativos</span></div>';
+}
+const kstripHTML=()=>'<div class="kstrip">'+DATA.kpis.map(ktileHTML).join('')+'</div>';
+const lensHTML=()=>'<div class="lensbar"><div class="lens"><span class="ll">Lente director</span>'
+ +'<button data-lens="all" class="on">Todo</button>'
+ +'<button data-lens="now">¿Cómo estamos hoy?</button>'
+ +'<button data-lens="sell">¿Qué vendemos mañana?</button>'
+ +'<button data-lens="risk">¿Qué me preocupa?</button></div>'
+ +'<span class="ll" style="margin-left:auto">Entender CIMA en 15 min · el detalle solo si hace falta</span></div>';
+
+function tilesHTML(){
+  const A=tile('A','forecast','Forecast de ventas','Real + proyección 90d · MXN M',
+    area(DATA.forecast.vals,DATA.forecast.split,C.blue,DATA.forecast.labels)
+    +'<div class="legend"><span><i style="background:var(--blue)"></i>Real</span><span><i style="background:var(--blue);opacity:.5"></i>Proyección</span><span style="margin-left:auto;color:var(--ok)">12m vs ppto: +1.8%</span></div>');
+  const B=tile('B','units','Unidades de negocio','Dónde se genera y se consume la caja',heat());
+  const Cc=tile('C','risks','Semáforo de riesgos','Grupo',DATA.risks.map(rrow).join(''));
+  const D=tile('D','pipeline','Pipeline CRM','Ponderado por etapa',
+    '<div class="bigv" style="margin-bottom:8px">'+cnt(2360,'$',' M')+'</div>'
+    +bars(DATA.pipeline.map(p=>({n:p.n,v:p.v,max:760,t:'$'+p.v+' M',c:p.c}))));
+  const E=tile('E','nps','NPS','Promotores − detractores',
+    '<div class="gaugewrap">'+gauge(DATA.kpis[5].n)+'<div class="gnum">'+cnt(61)+'</div><div class="gsub">▲ 3 vs trimestre</div></div>');
+  const F=tile('F','cash','Caja: generación vs consumo','MXN M',
+    bars(DATA.cash.map(c=>({n:c[0],v:Math.abs(c[1]),max:240,t:(c[1]<0?'−$':'+$')+Math.abs(c[1]),c:'var(--'+c[2]+')'}))));
+  const G=tile('G','horizon','Horizonte & licitaciones','',
+    DATA.horizon.map(h=>'<div class="minirow"><span class="ml">'+h[0]+'</span><span class="mv"'+(h[0]==='Tasa de éxito'?' style="color:var(--ok)"':'')+'>'+h[1]+'</span></div>').join(''));
+  const H=tile('H','clients','Clientes estratégicos','Las cuentas que mueven el grupo',clientes());
+  const I=tile('I','decisions','Decisiones para ti','Requieren Dirección General',DATA.decisions.map(item).join(''));
+  const J=tile('J','acq','Adquisiciones','vs plan',
+    DATA.acquisitions.map(a=>'<div class="minirow"><span class="ml"><span class="dot '+a[3]+'" style="display:inline-block;margin-right:6px"></span>'+a[1]+'</span><span class="mv" style="color:var(--'+a[3]+')">'+a[2]+'</span></div>').join(''));
+  return '<div class="mosaic">'+A+B+Cc+D+E+F+G+H+I+J+'</div>';
+}
+
+function render(){
+  $('#content').innerHTML=headerHTML()+kstripHTML()+lensHTML()+tilesHTML();
+  wire();
+}
+
+/* ============================================================
+   DRAWER  ·  detalle al click
+   ============================================================ */
+const card=(l,v,d,col)=>'<div class="dcard"><div class="dcl">'+l+'</div><div class="dcv">'+v+'</div>'+(d?'<div class="dcd" style="color:'+(col||'var(--muted)')+'">'+d+'</div>':'')+'</div>';
+const dact=(c,t,m,btn)=>'<div class="daction"><div class="di" style="background:var(--'+c+')"></div><div><div class="dat">'+t+'</div><div class="dam">'+m+'</div></div><div class="dab">'+(btn||'Abrir')+'</div></div>';
+
+function drawerContent(key){
+  const [type,id]=key.split(':');
+  if(type==='kpi'){
+    const k=DATA.kpis.find(x=>x.id===id),rr=k.r[RANGE];
+    const dec=k.dec||0, val=(k.pre||'')+(dec?k.n.toFixed(dec):fmt(k.n))+(k.suf||'');
+    const first=k.sp[0],last=k.sp[k.sp.length-1],chg=((last-first)/first*100);
+    return {k:'KPI · '+RANGE.toUpperCase(),t:k.l,sub:'Evolución de los últimos 6 periodos y comparativos por horizonte de tiempo.',
+      body:'<div class="dsec">Lectura actual</div><div class="dstat">'
+        +card('Valor',val,(rr.dir==='dn'?'▼ ':'▲ ')+rr.d+' '+rr.vs,rr.dir==='dn'?'var(--bad)':'var(--ok)')
+        +card('Tendencia 6p',(chg>=0?'+':'')+chg.toFixed(1)+'%','primer vs último punto',chg>=0?'var(--ok)':'var(--bad)')
+        +card('Estatus',k.s==='ok'?'En plan':k.s==='a'?'Atención':'Crítico','',k.s==='ok'?'var(--ok)':k.s==='a'?'var(--warn)':'var(--bad)')
+        +card('Serie','['+k.sp.join(', ')+']','valores del periodo')
+        +'</div>'
+        +'<div class="dsec">Comparativos</div>'
+        +Object.entries(k.r).map(([r,o])=>'<div class="minirow"><span class="ml">'+(r==='mes'?'Mensual':r==='trim'?'Trimestral':'Año contra año')+'</span><span class="mv" style="color:'+(o.dir==='dn'?'var(--bad)':'var(--ok)')+'">'+(o.dir==='dn'?'▼ ':'▲ ')+o.d+' · '+o.vs+'</span></div>').join('')};
+  }
+  const map={
+    group:{k:'Estado del grupo',t:DATA.group.label,sub:'Síntesis ejecutiva consolidada de las 6 unidades de negocio.',
+      body:'<div class="dnar">'+DATA.group.summary.replace(/<b>/g,'<b>').replace(/<\/b>/g,'</b>')+'</div>'
+        +'<div class="dsec">Qué mueve el semáforo</div>'
+        +dact('bad','Riesgo legal crítico','Litigio mercantil · audiencia en 12 días','Ver')
+        +dact('warn','EBITDA 0.6 pts bajo plan','Presión de margen en Salud y Marketing','Ver')
+        +dact('warn','2 unidades consumen caja','El Jarro y Marketing & E-com','Ver')
+        +dact('ok','Ventas y NPS sobre plan','Comercial sólido, base de clientes sana','Ver')
+        +'<div class="dsec">Inteligencia CIMA · recomendaciones</div>'+aiRows()},
+    forecast:{k:'Comercial',t:'Forecast de ventas',sub:'Real a la fecha más proyección a 90 días, contra presupuesto.',
+      body:'<div class="dstat">'+card('Real Jun','$860 M','mes en curso','var(--ok)')+card('Proy. 90d','$2,790 M','Jul–Sep')
+        +card('12m vs ppto','+1.8%','sobre presupuesto','var(--ok)')+card('Cierre proy.','$1,010 M','Dic 2026')+'</div>'
+        +'<div class="dsec">Mensual (MXN M)</div>'
+        +DATA.forecast.vals.map((v,i)=>'<div class="minirow"><span class="ml">'+DATA.forecast.labels[i]+(i>DATA.forecast.split?' · proy.':'')+'</span><span class="mv">$'+v+' M</span></div>').join('')},
+    units:{k:'Operación',t:'Unidades de negocio',sub:'Generación y consumo de caja por unidad. Ordenado por ventas.',
+      body:'<div class="dstat">'+card('Ventas grupo','$8,240 M','suma de unidades')+card('EBITDA pond.','17.8%','consolidado','var(--warn)')
+        +card('Generan caja','4 de 6','Alimentos lidera','var(--ok)')+card('Consumen caja','2 de 6','El Jarro, Marketing','var(--bad)')+'</div>'
+        +'<div class="dsec">Detalle</div>'
+        +DATA.units.map(u=>'<div class="minirow"><span class="ml"><span class="dot '+u[4]+'" style="display:inline-block;margin-right:7px"></span>'+u[0]+'</span><span class="mv" style="color:'+(u[3]<0?'var(--bad)':'var(--ink)')+'">$'+fmt(u[1])+' M · '+(u[3]<0?'−$'+fmt(-u[3]):'+$'+fmt(u[3]))+'</span></div>').join('')},
+    risks:{k:'Gobierno & riesgo',t:'Semáforo de riesgos',sub:'Seis frentes de riesgo del grupo. El crítico exige acción de Dirección.',
+      body:DATA.risks.map(r=>'<div class="dsec" style="color:var(--'+(r[0]==='r'?'bad':r[0]==='a'?'warn':'ok')+')">'+r[1]+' · '+r[3]+'</div><div class="dnar" style="font-size:12.5px">'+r[5]+'</div>').join('')},
+    pipeline:{k:'Comercial',t:'Pipeline CRM',sub:'Oportunidades ponderadas por probabilidad de cierre y etapa.',
+      body:'<div class="dstat">'+card('Total pond.','$2,360 M','cobertura 1.4x','var(--ok)')+card('En propuesta','$760 M','etapa más madura')+'</div>'
+        +'<div class="dsec">Por etapa</div>'+DATA.pipeline.map(p=>'<div class="minirow"><span class="ml">'+p.n+'</span><span class="mv">$'+p.v+' M</span></div>').join('')},
+    nps:{k:'Cliente',t:'NPS corporativo',sub:'Promotores menos detractores. Mide la salud de la relación comercial.',
+      body:'<div class="dstat">'+card('NPS','61','▲ 3 vs trimestre','var(--ok)')+card('Mejor cuenta','Norte · 72','promotor')+card('Peor cuenta','Peña · 44','en riesgo','var(--bad)')+card('Tendencia','+7 YTD','vs 2025','var(--ok)')+'</div>'},
+    cash:{k:'Finanzas',t:'Caja: generación vs consumo',sub:'Flujo neto por unidad en el periodo (MXN M).',
+      body:'<div class="dsec">Por unidad</div>'+DATA.cash.map(c=>'<div class="minirow"><span class="ml">'+c[0]+'</span><span class="mv" style="color:var(--'+c[2]+')">'+(c[1]<0?'−$':'+$')+Math.abs(c[1])+' M</span></div>').join('')
+        +'<div class="dsec">Acción</div>'+dact('bad','Plan de corrección El Jarro','−$60 M · vence en 3 días','Aprobar')},
+    horizon:{k:'Comercial',t:'Horizonte & licitaciones',sub:'Visibilidad de ingresos y desempeño en concursos.',
+      body:'<div class="dstat">'+DATA.horizon.map(h=>card(h[0],h[1],'')).join('')+'</div>'},
+    clients:{k:'Cliente',t:'Clientes estratégicos',sub:'Las cuentas que más mueven al grupo, por venta y riesgo.',
+      body:'<div class="dsec">Cartera clave</div>'+DATA.clients.map(x=>'<div class="minirow"><span class="ml"><span class="dot '+x[3]+'" style="display:inline-block;margin-right:7px"></span>'+x[0]+'</span><span class="mv">$'+x[1]+' M · NPS '+x[2]+'</span></div>').join('')
+        +'<div class="dsec">Acción</div>'+dact('bad','Visita Corporativo Peña','NPS 44 · $320 M en riesgo','Agendar')},
+    decisions:{k:'Dirección General',t:'Decisiones para ti',sub:'Lo que está esperando tu firma o criterio esta semana.',
+      body:DATA.decisions.map(d=>dact(d[0]==='r'?'bad':d[0]==='a'?'warn':'blue',d[1],d[2],'Resolver')).join('')},
+    acq:{k:'M&A',t:'Adquisiciones',sub:'Avance de integración de las adquisiciones recientes vs plan.',
+      body:'<div class="dstat">'+DATA.acquisitions.map(a=>card(a[1],a[2],a[3]==='bad'?'detrás del plan':'sobre plan',a[3]==='bad'?'var(--bad)':'var(--ok)')).join('')+'</div>'
+        +'<div class="dsec">Acción</div>'+dact('bad','El Jarro · integración 45%','Sinergias por debajo del caso base','Revisar')},
+    briefing:(function(){const c=trustCounts();return {k:'Lunes 08:00 · automático',t:'Resumen ejecutivo semanal',sub:'Lo que llega a tu correo cada lunes antes de las 8:00 am. Redactado por IA, validado contra la fuente oficial.',
+      body:'<div class="dsec">Semáforo general del grupo</div>'
+        +'<div class="dnar">Grupo en <b>ámbar</b>. La semana cierra con <b>ventas y NPS sobre plan</b>, pero el <b>EBITDA sigue 0.6 pts abajo</b> y <b>2 unidades consumen caja</b>. Hay <b>1 riesgo legal crítico</b> activo.</div>'
+        +'<div class="dsec">Principales movimientos de la semana</div>'
+        +dact('ok','Ventas YTD +2.4% vs plan','$8,240 M · impulsadas por Alimentos y Cimarrón','')
+        +dact('warn','Cartera +4% vs mes','$1,180 M · vigilar días de cobranza','')
+        +dact('bad','El Jarro 3er mes en flujo negativo','−$60 M · integración 45%','')
+        +'<div class="dsec">Indicadores clave</div><div class="dstat">'
+        +card('Ventas','$8,240 M','▲ 2.4% plan','var(--ok)')+card('EBITDA','17.8%','▼ 0.6 pts','var(--bad)')
+        +card('Flujo','+$612 M','▲ 9.0%','var(--ok)')+card('NPS','61','▲ 3 pts','var(--ok)')+'</div>'
+        +'<div class="dsec">Alertas y riesgos relevantes</div>'
+        +dact('bad','Litigio mercantil','Audiencia en 12 días · provisión por validar','')
+        +dact('warn','Rotación en Salud','28% anualizada vs 15% objetivo','')
+        +'<div class="dsec">Decisiones que requieren tu atención</div>'
+        +DATA.decisions.map(d=>dact(d[0]==='r'?'bad':d[0]==='a'?'warn':'blue',d[1],d[2],'Resolver')).join('')
+        +'<div class="dsec">Lectura de IA</div>'+aiRows()
+        +'<div class="dsec">Confiabilidad de este briefing</div>'
+        +'<div class="dnar" style="font-size:12.5px">'+c.pct+'% de los indicadores provienen de fuente oficial confiable; '+c.val+' requieren validación y '+c.no+' no es confiable aún. Ningún número de este resumen se calcula a mano.</div>'};})(),
+    datahealth:(function(){const c=trustCounts();return {k:'Fase 1 · Gobierno de información',t:'Salud y confiabilidad del dato',sub:'Una sola fuente oficial por indicador, con dueño y nivel de confiabilidad. Sin múltiples versiones de la verdad.',
+      body:'<div class="dstat">'+card('Confiables',c.ok+' / '+c.total,Math.round(c.ok/c.total*100)+'% del total','var(--ok)')
+        +card('Por validar',''+c.val,'en revisión','var(--warn)')+card('No confiables',''+c.no,'requieren fuente oficial','var(--bad)')
+        +card('Fuentes','SAP · Odoo · Salesforce','+ Excel y manual en migración')+'</div>'
+        +'<div class="dsec">Inventario de indicadores</div>'
+        +'<table class="gtbl"><tbody>'+Object.entries(DATA.gov).map(([k,g])=>{const t=TRUST[g[2]];return '<tr><td><span class="gdot" style="background:'+t[1]+';color:'+t[1]+';margin-right:8px"></span>'+k+'</td><td class="s">'+g[0]+'</td><td class="t" style="color:'+t[1]+'">'+t[0]+'</td></tr>';}).join('')+'</tbody></table>'};})()
+  };
+  return map[type]||{k:'',t:'Detalle',sub:'',body:''};
+}
+function openDrawer(key){
+  const c=drawerContent(key),d=$('#drawer');
+  const govId=key.indexOf('kpi:')===0?key.split(':')[1]:key;
+  const gov=(key==='datahealth'||key==='briefing')?'':govSection(govId);
+  d.innerHTML='<div class="dh"><div><div class="dk">'+c.k+'</div><div class="dt">'+c.t+'</div><div class="dsub">'+c.sub+'</div></div><button class="dx" id="dclose" aria-label="Cerrar">×</button></div><div class="db">'+c.body+gov+'<div style="margin-top:22px;color:var(--dim);font-size:10.5px">Datos ilustrativos · <kbd>Esc</kbd> para cerrar</div></div>';
+  d.classList.add('on');d.setAttribute('aria-hidden','false');$('#scrim').classList.add('on');
+  $('#dclose').onclick=closeDrawer;
+}
+function closeDrawer(){$('#drawer').classList.remove('on');$('#drawer').setAttribute('aria-hidden','true');$('#scrim').classList.remove('on');}
+
+/* ============================================================
+   wiring (clicks, rango, tooltips)
+   ============================================================ */
+function wire(){
+  document.querySelectorAll('[data-drawer]').forEach(el=>el.addEventListener('click',e=>{e.stopPropagation();openDrawer(el.dataset.drawer);}));
+  const rg=$('#range');
+  if(rg)rg.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;RANGE=b.dataset.r;render();reveal();});
+  const lb=document.querySelector('.lens');
+  if(lb)lb.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;
+    lb.querySelectorAll('button').forEach(x=>x.classList.remove('on'));b.classList.add('on');
+    const m=document.querySelector('.mosaic'),v=b.dataset.lens;
+    document.querySelectorAll('.mosaic .tile').forEach(t=>t.classList.remove('lit'));
+    if(v==='all'){m.classList.remove('focus');}
+    else{m.classList.add('focus');document.querySelectorAll('.mosaic .tile[data-lens="'+v+'"]').forEach(t=>t.classList.add('lit'));}
+  });
+  // tooltip en forecast
+  document.querySelectorAll('.iarea').forEach(svg=>{
+    const pts=svg.dataset.pts.split(';').map(s=>{const[x,y,v,l,p]=s.split(':');return{x:+x,y:+y,v:+v,l:l,proj:p==='1'};});
+    const cur=svg.querySelector('.acursor'),dot=svg.querySelector('.adot');
+    const vb=svg.viewBox.baseVal;
+    svg.addEventListener('mousemove',e=>{
+      const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)/r.width*vb.width;
+      let best=pts[0],bd=1e9;pts.forEach(p=>{const d=Math.abs(p.x-sx);if(d<bd){bd=d;best=p;}});
+      cur.setAttribute('x1',best.x);cur.setAttribute('x2',best.x);cur.setAttribute('opacity','.5');
+      dot.setAttribute('cx',best.x);dot.setAttribute('cy',best.y);dot.setAttribute('opacity','1');
+      showTip(e.clientX,r.top+best.y/vb.height*r.height,best.l+(best.proj?' · proy.':''),'$'+best.v+' M',best.proj?'Proyección':'Real');
+    });
+    svg.addEventListener('mouseleave',()=>{cur.setAttribute('opacity','0');dot.setAttribute('opacity','0');hideTip();});
+  });
+  // tooltip en sparklines de KPI
+  document.querySelectorAll('.lspark').forEach(svg=>{
+    const vals=svg.dataset.vals.split(',').map(Number);
+    svg.addEventListener('mousemove',e=>{const r=svg.getBoundingClientRect(),i=Math.min(vals.length-1,Math.max(0,Math.round((e.clientX-r.left)/r.width*(vals.length-1))));
+      showTip(e.clientX,r.top,'Periodo '+(i+1),fmt(vals[i]),'serie histórica');});
+    svg.addEventListener('mouseleave',hideTip);
+  });
+}
+const tip=$('#tip');
+function showTip(x,y,l,v,x2){tip.innerHTML='<div class="tl">'+l+'</div><div class="tv">'+v+'</div>'+(x2?'<div class="tx">'+x2+'</div>':'');tip.style.left=x+'px';tip.style.top=y+'px';tip.style.opacity='1';}
+function hideTip(){tip.style.opacity='0';}
+
+/* count up */
+function countUp(el){const end=parseFloat(el.dataset.count),dec=parseInt(el.dataset.dec||0),pre=el.dataset.pre||'',suf=el.dataset.suf||'';
+  if(reduced){el.textContent=pre+(dec?end.toFixed(dec):fmt(end))+suf;return;}
+  const t0=performance.now();function st(t){const k=Math.min(1,(t-t0)/1000),e=1-Math.pow(1-k,3),v=end*e;el.textContent=pre+(dec?v.toFixed(dec):fmt(v))+suf;if(k<1)requestAnimationFrame(st);}requestAnimationFrame(st);}
+
+/* live sparklines */
+let sparks=[];
+function setupSparks(){
+  sparks=[...document.querySelectorAll('.lspark')].map(svg=>({line:svg.querySelector('.lline'),fill:svg.querySelector('.lfill'),
+    vals:svg.dataset.vals.split(',').map(Number),w:+svg.dataset.w,h:+svg.dataset.h}));
+  sparks.forEach(s=>{s.line.style.strokeDasharray='none';s.line.style.strokeDashoffset='0';});
+}
+function renderSpark(s){const mn=Math.min(...s.vals),mx=Math.max(...s.vals),rng=(mx-mn)||1,p=2;
+  const line=s.vals.map((v,i)=>(p+i/(s.vals.length-1)*(s.w-2*p)).toFixed(1)+','+(s.h-p-((v-mn)/rng)*(s.h-2*p)).toFixed(1)).join(' ');
+  s.line.setAttribute('points',line); s.fill.setAttribute('points','0,'+s.h+' '+line+' '+s.w+','+s.h);}
+function tickSparks(){sparks.forEach(s=>{const last=s.vals[s.vals.length-1];s.vals.push(Math.max(last*0.992,last+(Math.random()-0.42)*last*0.012));s.vals.shift();renderSpark(s);});}
+
+/* clock */
+function clk(){const d=new Date(),p=n=>String(n).padStart(2,'0'),e=$('#clk');if(e)e.textContent=p(d.getHours())+':'+p(d.getMinutes())+':'+p(d.getSeconds());}
+
+/* motes */
+function motes(){
+  const cv=$('#motes'),x=cv.getContext('2d'),DPR=Math.min(window.devicePixelRatio||1,2),W=1840,H=1040;
+  cv.width=W*DPR;cv.height=H*DPR;cv.style.width=W+'px';cv.style.height=H+'px';x.scale(DPR,DPR);
+  const cols=[[42,155,239],[100,57,208],[74,165,229],[46,212,122]];
+  const ps=[];for(let i=0;i<54;i++){const c=cols[i%cols.length];ps.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.18,vy:(Math.random()-.5)*.18,r:.8+Math.random()*1.8,a:.2+Math.random()*.4,c:c});}
+  function loop(){x.clearRect(0,0,W,H);x.globalCompositeOperation='lighter';
+    for(const p of ps){p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=W;if(p.x>W)p.x=0;if(p.y<0)p.y=H;if(p.y>H)p.y=0;
+      const g=x.createRadialGradient(p.x,p.y,0,p.x,p.y,p.r*5);
+      g.addColorStop(0,'rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+','+p.a+')');g.addColorStop(1,'rgba('+p.c[0]+','+p.c[1]+','+p.c[2]+',0)');
+      x.fillStyle=g;x.beginPath();x.arc(p.x,p.y,p.r*5,0,6.2832);x.fill();}
+    x.globalCompositeOperation='source-over';requestAnimationFrame(loop);}
+  loop();
+}
+
+/* fit */
+function fit(){const W=1840,H=1040,s=Math.min(window.innerWidth/W,window.innerHeight/H);$('#scaler').style.transform='translate(-50%,-50%) scale('+s+')';}
+
+/* reveal (cascada + animaciones) */
+function reveal(){
+  const tiles=[...document.querySelectorAll('.ktile,.tile')];
+  tiles.forEach((t,i)=>t.style.setProperty('--d',(reduced?0:i*0.04)+'s'));
+  if(reduced){
+    document.querySelectorAll('.bf').forEach(b=>b.style.width=b.dataset.w+'%');
+    document.querySelectorAll('svg .draw').forEach(p=>p.classList.add('go'));
+    document.querySelectorAll('.af').forEach(a=>a.classList.add('go'));
+    document.querySelectorAll('[data-count]').forEach(countUp);
+    return;
+  }
+  setTimeout(()=>{
+    document.querySelectorAll('.bf').forEach(b=>b.style.width=b.dataset.w+'%');
+    document.querySelectorAll('svg .draw').forEach(p=>{const L=p.getTotalLength?p.getTotalLength():120;p.style.strokeDasharray=L;p.style.strokeDashoffset=L;requestAnimationFrame(()=>p.classList.add('go'));});
+    document.querySelectorAll('.af').forEach(a=>a.classList.add('go'));
+    document.querySelectorAll('[data-count]').forEach(countUp);
+    setupSparks();
+  },60);
+}
+
+/* ============================================================
+   arranque
+   ============================================================ */
+render();
+clk();setInterval(clk,1000);
+fit();window.addEventListener('resize',fit);
+$('#scrim').addEventListener('click',closeDrawer);
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDrawer();});
+
+if(reduced){
+  reveal();
+}else{
+  const boot=$('#boot');
+  setTimeout(()=>{boot.style.opacity='0';},950);
+  setTimeout(()=>{boot.style.display='none';},1550);
+  setTimeout(reveal,900);
+  setTimeout(motes,1100);
+  setTimeout(()=>{setInterval(tickSparks,2000);},2600);
+}
+})();
+</script>
+</body>
+</html>
