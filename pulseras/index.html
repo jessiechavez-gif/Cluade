@@ -1,0 +1,535 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>Asignación de Pulseras</title>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0f1115;
+    --card: #1a1d24;
+    --card-border: #2a2e38;
+    --text: #eef0f3;
+    --muted: #9aa2b1;
+    --accent: #4f8cff;
+    --accent-dark: #3a6fd9;
+    --ok: #33c17a;
+    --err: #ef5350;
+    --warn: #f0a93a;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding-bottom: 40px;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--card-border);
+    position: sticky;
+    top: 0;
+    background: var(--bg);
+    z-index: 5;
+  }
+  header h1 {
+    font-size: 18px;
+    margin: 0;
+    font-weight: 600;
+  }
+  header .sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  button.icon-btn {
+    background: none;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    border-radius: 10px;
+    padding: 8px 10px;
+    font-size: 16px;
+    cursor: pointer;
+  }
+  main {
+    max-width: 560px;
+    margin: 0 auto;
+    padding: 16px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--card-border);
+    border-radius: 14px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .card h2 {
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  input[type=text], input[type=url] {
+    width: 100%;
+    background: #10131a;
+    border: 1px solid var(--card-border);
+    color: var(--text);
+    padding: 12px 14px;
+    border-radius: 10px;
+    font-size: 16px;
+    outline: none;
+  }
+  input[type=text]:focus, input[type=url]:focus {
+    border-color: var(--accent);
+  }
+  label.field-label {
+    display: block;
+    font-size: 12px;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .field { margin-bottom: 14px; }
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 10px;
+    border: none;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:active { background: var(--accent-dark); }
+  .btn-secondary { background: #262a34; color: var(--text); border: 1px solid var(--card-border); }
+  .btn-danger { background: var(--err); color: white; }
+  .btn:disabled { opacity: .5; cursor: default; }
+  .row-gap { display: flex; gap: 10px; }
+  .row-gap > * { flex: 1; }
+
+  #results { margin-top: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--card-border);
+    border-radius: 10px;
+    cursor: pointer;
+    background: #12151b;
+  }
+  .result-item:active { background: #1c2028; }
+  .result-item .name { font-weight: 600; font-size: 15px; }
+  .result-item .meta { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .badge {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--card-border);
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .badge.has-bracelet { color: var(--ok); border-color: var(--ok); }
+  .badge.no-bracelet { color: var(--warn); border-color: var(--warn); }
+
+  #selected-card { display: none; }
+  #selected-card .emp-name { font-size: 18px; font-weight: 700; }
+  #selected-card .emp-meta { color: var(--muted); font-size: 13px; margin-top: 4px; }
+  #selected-card .emp-num { color: var(--accent); font-weight: 600; }
+
+  .code-display {
+    margin-top: 12px;
+    padding: 12px;
+    background: #10131a;
+    border: 1px dashed var(--card-border);
+    border-radius: 10px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: .03em;
+    word-break: break-all;
+  }
+  .code-display.empty { color: var(--muted); font-weight: 400; font-size: 14px; }
+
+  #scanner-wrap { display: none; margin-top: 12px; }
+  #reader { width: 100%; border-radius: 12px; overflow: hidden; }
+
+  .status-msg {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    display: none;
+  }
+  .status-msg.ok { display: block; background: rgba(51,193,122,.12); color: var(--ok); border: 1px solid rgba(51,193,122,.35); }
+  .status-msg.err { display: block; background: rgba(239,83,80,.12); color: var(--err); border: 1px solid rgba(239,83,80,.35); }
+  .status-msg.info { display: block; background: rgba(79,140,255,.12); color: var(--accent); border: 1px solid rgba(79,140,255,.35); }
+
+  #settings-modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,.6);
+    z-index: 20;
+    align-items: flex-end;
+  }
+  #settings-modal .sheet {
+    background: var(--card);
+    width: 100%;
+    max-width: 560px;
+    margin: 0 auto;
+    border-radius: 18px 18px 0 0;
+    padding: 20px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  #settings-modal h2 { margin-top: 0; }
+  .hint { font-size: 12px; color: var(--muted); line-height: 1.5; margin-top: 8px; }
+  .hint code {
+    background: #0b0d12;
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+  #loading-msg { text-align: center; color: var(--muted); padding: 20px; font-size: 14px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Pulseras</h1>
+    <div class="sub" id="sync-status">Cargando datos...</div>
+  </div>
+  <button class="icon-btn" id="settings-btn" title="Configuración">⚙️</button>
+</header>
+
+<main>
+
+  <div class="card">
+    <h2>Buscar colaborador</h2>
+    <div class="field">
+      <input type="text" id="search-input" placeholder="Número de empleado o nombre" autocomplete="off" inputmode="search">
+    </div>
+    <div id="results"></div>
+    <div id="loading-msg" style="display:none;">Cargando datos de la hoja...</div>
+  </div>
+
+  <div class="card" id="selected-card">
+    <h2>Colaborador seleccionado</h2>
+    <div class="emp-name" id="sel-name">—</div>
+    <div class="emp-meta">Núm. empleado: <span class="emp-num" id="sel-num">—</span></div>
+    <div class="emp-meta" id="sel-email">—</div>
+    <div class="emp-meta" id="sel-bracelet">Pulsera actual: —</div>
+
+    <div class="code-display empty" id="code-display">Ningún código escaneado todavía</div>
+
+    <div style="margin-top:14px;" class="row-gap">
+      <button class="btn btn-secondary" id="scan-btn">📷 Escanear código</button>
+      <button class="btn btn-secondary" id="manual-btn">⌨️ Ingresar código</button>
+    </div>
+
+    <div id="scanner-wrap">
+      <div id="reader"></div>
+      <button class="btn btn-secondary" id="stop-scan-btn" style="margin-top:10px;">Cancelar escaneo</button>
+    </div>
+
+    <button class="btn btn-primary" id="assign-btn" style="margin-top:14px;" disabled>Asignar pulsera</button>
+
+    <div class="status-msg" id="status-msg"></div>
+  </div>
+
+</main>
+
+<div id="settings-modal">
+  <div class="sheet">
+    <h2>Configuración</h2>
+    <div class="field">
+      <label class="field-label">URL del CSV publicado (Google Sheets)</label>
+      <input type="url" id="csv-url-input" placeholder="https://docs.google.com/.../pub?output=csv">
+    </div>
+    <div class="field">
+      <label class="field-label">URL del Web App de Apps Script (para guardar)</label>
+      <input type="url" id="script-url-input" placeholder="https://script.google.com/macros/s/XXXX/exec">
+    </div>
+    <div class="row-gap">
+      <button class="btn btn-secondary" id="settings-cancel-btn">Cerrar</button>
+      <button class="btn btn-primary" id="settings-save-btn">Guardar</button>
+    </div>
+    <div class="hint">
+      Para poder <strong>asignar</strong> pulseras (escribir en la hoja) necesitas publicar un
+      <strong>Apps Script Web App</strong> conectado a tu Google Sheet. Instrucciones completas en
+      <code>README.md</code> del proyecto. Sin esa URL, la herramienta solo puede <strong>buscar/consultar</strong>.
+    </div>
+  </div>
+</div>
+
+<script>
+const DEFAULT_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQADkYAq7mpvxbGQp7hsUvCfu6N1Hw_TKylWoL_9OGcg9DRxbECF2xCSiPIezJjDxLY-RXzxhBB8vdZ/pub?gid=0&single=true&output=csv";
+
+const state = {
+  csvUrl: localStorage.getItem("pulseras_csv_url") || DEFAULT_CSV_URL,
+  scriptUrl: localStorage.getItem("pulseras_script_url") || "",
+  rows: [],
+  selected: null,
+  scannedCode: "",
+  html5Qr: null,
+};
+
+const el = (id) => document.getElementById(id);
+
+function parseCsv(text) {
+  const rows = [];
+  let row = [], field = "", inQuotes = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (text[i + 1] === '"') { field += '"'; i++; }
+        else { inQuotes = false; }
+      } else {
+        field += c;
+      }
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === ',') { row.push(field); field = ""; }
+      else if (c === '\r') { /* skip */ }
+      else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ""; }
+      else field += c;
+    }
+  }
+  if (field.length || row.length) { row.push(field); rows.push(row); }
+  return rows.filter(r => r.some(c => c.trim() !== ""));
+}
+
+function normalizeHeader(h) {
+  return h.trim().toLowerCase()
+    .normalize("NFD").replace(/[̀-ͯ]/g, "");
+}
+
+function rowsToObjects(csvRows) {
+  if (!csvRows.length) return [];
+  const headers = csvRows[0].map(normalizeHeader);
+  const idx = {
+    pulsera: headers.findIndex(h => h.includes("pulsera")),
+    numEmpleado: headers.findIndex(h => h.includes("num") && h.includes("empleado")),
+    nombre: headers.findIndex(h => h.includes("nombre")),
+    correo: headers.findIndex(h => h.includes("correo") || h.includes("email")),
+  };
+  return csvRows.slice(1).map(r => ({
+    pulsera: (r[idx.pulsera] || "").trim(),
+    numEmpleado: (r[idx.numEmpleado] || "").trim(),
+    nombre: (r[idx.nombre] || "").trim(),
+    correo: (r[idx.correo] || "").trim(),
+  })).filter(o => o.numEmpleado || o.nombre);
+}
+
+async function loadData(showLoading = true) {
+  if (!state.csvUrl) {
+    el("sync-status").textContent = "Configura la URL del CSV en ⚙️";
+    return;
+  }
+  if (showLoading) el("loading-msg").style.display = "block";
+  el("sync-status").textContent = "Cargando datos...";
+  try {
+    const sep = state.csvUrl.includes("?") ? "&" : "?";
+    const res = await fetch(state.csvUrl + sep + "_ts=" + Date.now());
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    state.rows = rowsToObjects(parseCsv(text));
+    el("sync-status").textContent = state.rows.length + " colaboradores cargados";
+  } catch (err) {
+    el("sync-status").textContent = "Error al cargar: " + err.message;
+  } finally {
+    el("loading-msg").style.display = "none";
+  }
+}
+
+function renderResults(query) {
+  const box = el("results");
+  box.innerHTML = "";
+  if (!query) return;
+  const q = query.trim().toLowerCase();
+  const matches = state.rows.filter(r =>
+    r.numEmpleado.toLowerCase().includes(q) ||
+    r.nombre.toLowerCase().includes(q)
+  ).slice(0, 25);
+
+  if (!matches.length) {
+    box.innerHTML = '<div class="hint">Sin resultados.</div>';
+    return;
+  }
+
+  matches.forEach(r => {
+    const item = document.createElement("div");
+    item.className = "result-item";
+    const hasBracelet = !!r.pulsera;
+    item.innerHTML = `
+      <div>
+        <div class="name">${escapeHtml(r.nombre || "(sin nombre)")}</div>
+        <div class="meta">#${escapeHtml(r.numEmpleado)} · ${escapeHtml(r.correo)}</div>
+      </div>
+      <div class="badge ${hasBracelet ? "has-bracelet" : "no-bracelet"}">
+        ${hasBracelet ? escapeHtml(r.pulsera) : "sin pulsera"}
+      </div>
+    `;
+    item.addEventListener("click", () => selectEmployee(r));
+    box.appendChild(item);
+  });
+}
+
+function escapeHtml(s) {
+  return (s || "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function selectEmployee(r) {
+  state.selected = r;
+  state.scannedCode = "";
+  el("selected-card").style.display = "block";
+  el("sel-name").textContent = r.nombre || "(sin nombre)";
+  el("sel-num").textContent = r.numEmpleado;
+  el("sel-email").textContent = r.correo || "—";
+  el("sel-bracelet").textContent = "Pulsera actual: " + (r.pulsera || "sin asignar");
+  updateCodeDisplay();
+  setStatus("");
+  el("selected-card").scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+function updateCodeDisplay() {
+  const disp = el("code-display");
+  if (state.scannedCode) {
+    disp.textContent = state.scannedCode;
+    disp.classList.remove("empty");
+  } else {
+    disp.textContent = "Ningún código escaneado todavía";
+    disp.classList.add("empty");
+  }
+  el("assign-btn").disabled = !(state.selected && state.scannedCode);
+}
+
+function setStatus(msg, type) {
+  const box = el("status-msg");
+  box.className = "status-msg" + (type ? " " + type : "");
+  box.textContent = msg;
+}
+
+async function startScanner() {
+  el("scanner-wrap").style.display = "block";
+  setStatus("");
+  const formats = [
+    Html5QrcodeSupportedFormats.CODE_128,
+    Html5QrcodeSupportedFormats.CODE_39,
+    Html5QrcodeSupportedFormats.EAN_13,
+    Html5QrcodeSupportedFormats.EAN_8,
+    Html5QrcodeSupportedFormats.UPC_A,
+    Html5QrcodeSupportedFormats.UPC_E,
+    Html5QrcodeSupportedFormats.ITF,
+    Html5QrcodeSupportedFormats.CODABAR,
+    Html5QrcodeSupportedFormats.QR_CODE,
+  ];
+  state.html5Qr = new Html5Qrcode("reader", { formatsToSupport: formats, verbose: false });
+  try {
+    await state.html5Qr.start(
+      { facingMode: "environment" },
+      { fps: 12, qrbox: { width: 260, height: 140 } },
+      (decodedText) => {
+        state.scannedCode = decodedText;
+        updateCodeDisplay();
+        stopScanner();
+        setStatus("Código detectado: " + decodedText, "info");
+      },
+      () => { /* ignore per-frame scan failures */ }
+    );
+  } catch (err) {
+    setStatus("No se pudo iniciar la cámara: " + err.message + ". Verifica permisos de cámara y que estés en HTTPS.", "err");
+    el("scanner-wrap").style.display = "none";
+  }
+}
+
+async function stopScanner() {
+  if (state.html5Qr) {
+    try { await state.html5Qr.stop(); await state.html5Qr.clear(); } catch (e) {}
+    state.html5Qr = null;
+  }
+  el("scanner-wrap").style.display = "none";
+}
+
+async function assignBracelet() {
+  if (!state.selected || !state.scannedCode) return;
+  if (!state.scriptUrl) {
+    setStatus("Falta configurar la URL del Apps Script Web App en ⚙️ para poder guardar.", "err");
+    return;
+  }
+  const btn = el("assign-btn");
+  btn.disabled = true;
+  setStatus("Guardando...", "info");
+  try {
+    const res = await fetch(state.scriptUrl, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify({
+        numEmpleado: state.selected.numEmpleado,
+        pulsera: state.scannedCode,
+      }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      setStatus("Pulsera asignada correctamente a " + (data.nombre || state.selected.nombre) + ".", "ok");
+      state.selected.pulsera = state.scannedCode;
+      el("sel-bracelet").textContent = "Pulsera actual: " + state.scannedCode;
+      loadData(false);
+    } else {
+      setStatus(data.error || "No se pudo guardar.", "err");
+    }
+  } catch (err) {
+    setStatus("Error de conexión: " + err.message, "err");
+  } finally {
+    btn.disabled = !(state.selected && state.scannedCode);
+  }
+}
+
+function openSettings() {
+  el("csv-url-input").value = state.csvUrl;
+  el("script-url-input").value = state.scriptUrl;
+  el("settings-modal").style.display = "flex";
+}
+function closeSettings() { el("settings-modal").style.display = "none"; }
+function saveSettings() {
+  state.csvUrl = el("csv-url-input").value.trim() || DEFAULT_CSV_URL;
+  state.scriptUrl = el("script-url-input").value.trim();
+  localStorage.setItem("pulseras_csv_url", state.csvUrl);
+  localStorage.setItem("pulseras_script_url", state.scriptUrl);
+  closeSettings();
+  loadData();
+}
+
+el("search-input").addEventListener("input", (e) => renderResults(e.target.value));
+el("scan-btn").addEventListener("click", startScanner);
+el("stop-scan-btn").addEventListener("click", stopScanner);
+el("manual-btn").addEventListener("click", () => {
+  const v = prompt("Ingresa el código de la pulsera manualmente:");
+  if (v && v.trim()) {
+    state.scannedCode = v.trim();
+    updateCodeDisplay();
+  }
+});
+el("assign-btn").addEventListener("click", assignBracelet);
+el("settings-btn").addEventListener("click", openSettings);
+el("settings-cancel-btn").addEventListener("click", closeSettings);
+el("settings-save-btn").addEventListener("click", saveSettings);
+
+loadData();
+</script>
+</body>
+</html>
